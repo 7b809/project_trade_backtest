@@ -4,6 +4,8 @@ from validator import run_validation
 from github_uploader import upload_folder_to_github
 from dotenv import load_dotenv
 import shutil
+
+from github_uploader import delete_folder_recursive
 # ==========================================
 # LOAD ENV VARIABLES
 # ==========================================
@@ -25,7 +27,45 @@ app = Flask(__name__)
 def home():
     return "Trade Validation API Running"
 
+@app.route("/delete/<folder_name>", methods=["DELETE"])
+def delete_one(folder_name):
 
+    try:
+        full_path = f"validation_results/{folder_name}"
+
+        delete_folder_recursive(
+            repo=GITHUB_REPO,
+            token=GITHUB_TOKEN,
+            folder_path=full_path
+        )
+
+        return jsonify({
+            "status": "success",
+            "deleted_folder": folder_name
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/delete-all", methods=["DELETE"])
+def delete_all():
+
+    try:
+        base_path = "validation_results"
+
+        delete_folder_recursive(
+            repo=GITHUB_REPO,
+            token=GITHUB_TOKEN,
+            folder_path=base_path
+        )
+
+        return jsonify({
+            "status": "success",
+            "message": "All validation folders deleted"
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500    
 # ==========================================
 # VALIDATE ROUTE
 # ==========================================
