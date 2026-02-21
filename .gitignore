@@ -1,0 +1,3 @@
+validation_output/
+__pycache__/
+.env
