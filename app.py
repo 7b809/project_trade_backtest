@@ -3,7 +3,7 @@ import os
 from validator import run_validation
 from github_uploader import upload_folder_to_github
 from dotenv import load_dotenv
-
+import shutil
 # ==========================================
 # LOAD ENV VARIABLES
 # ==========================================
@@ -33,10 +33,7 @@ def home():
 @app.route("/validate", methods=["POST"])
 def validate():
 
-    # Optional API Key Security
-    if API_KEY:
-        if request.headers.get("x-api-key") != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+    output_folder = None  # define outside try
 
     try:
         data = request.get_json()
@@ -52,7 +49,7 @@ def validate():
             return jsonify({"error": "Missing JSON data"}), 400
 
         # ==========================
-        # RUN VALIDATION ENGINE
+        # RUN VALIDATION
         # ==========================
 
         output_folder = run_validation(ce_data, pe_data, index_data)
@@ -67,10 +64,6 @@ def validate():
             token=GITHUB_TOKEN
         )
 
-        # ==========================
-        # GENERATE RAW FILE URLS
-        # ==========================
-
         raw_urls = [
             f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{path}"
             for path in uploaded_files
@@ -78,19 +71,24 @@ def validate():
 
         folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/validation_results/validation_{timestamp}"
 
-        # ==========================
-        # FINAL RESPONSE
-        # ==========================
-
-        return jsonify({
+        response_data = {
             "status": "success",
             "folder_url": folder_url,
             "files": raw_urls
-        })
+        }
+
+        return jsonify(response_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    finally:
+        # ==========================
+        # CLEANUP LOCAL FILES
+        # ==========================
+
+        if output_folder and os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
 
 # ==========================================
 # RUN LOCAL SERVER
