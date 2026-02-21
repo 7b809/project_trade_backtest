@@ -24,12 +24,15 @@ def upload_file(repo, token, file_path, repo_path):
     response = requests.put(url, json=data, headers=headers)
 
     if response.status_code not in [200, 201]:
-        raise Exception(response.text)
+        raise Exception(f"GitHub Upload Failed: {response.text}")
+
+    return repo_path
 
 
 def upload_folder_to_github(folder_path, repo, token):
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    uploaded_files = []
 
     for root, dirs, files in os.walk(folder_path):
         for file in files:
@@ -37,7 +40,10 @@ def upload_folder_to_github(folder_path, repo, token):
             full_path = os.path.join(root, file)
             relative_path = os.path.relpath(full_path, folder_path)
 
-            # 👇 This creates unique folder per validation
             repo_path = f"validation_results/validation_{timestamp}/{relative_path}"
 
             upload_file(repo, token, full_path, repo_path)
+
+            uploaded_files.append(repo_path)
+
+    return uploaded_files, timestamp
