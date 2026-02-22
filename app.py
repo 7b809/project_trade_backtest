@@ -34,7 +34,7 @@ def home():
 
 
 @app.route("/")
-def home():
+def ui():
     return render_template("index.html")
 
 @app.route("/dashboard")
