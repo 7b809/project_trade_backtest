@@ -43,10 +43,8 @@ def save_excel(df, path):
     wb = load_workbook(path)
     ws = wb.active
 
-    # Freeze header
     ws.freeze_panes = "A2"
 
-    # Auto column width
     for column in ws.columns:
         max_length = 0
         col_letter = get_column_letter(column[0].column)
@@ -57,7 +55,6 @@ def save_excel(df, path):
 
         ws.column_dimensions[col_letter].width = max_length + 3
 
-    # Bold header
     for cell in ws[1]:
         cell.font = Font(bold=True)
 
@@ -70,10 +67,6 @@ def save_excel(df, path):
 
 def run_validation(ce_data, pe_data, index_data):
 
-    # =============================
-    # CREATE TIMESTAMP FOLDER
-    # =============================
-
     base_dir = "validation_output"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     base_dir = os.path.join(base_dir, f"validation_{timestamp}")
@@ -84,10 +77,6 @@ def run_validation(ce_data, pe_data, index_data):
     os.makedirs(valid_dir, exist_ok=True)
     os.makedirs(not_valid_dir, exist_ok=True)
 
-    # =============================
-    # LOAD DATA INTO DATAFRAMES
-    # =============================
-
     df_ce = pd.DataFrame(ce_data)
     df_pe = pd.DataFrame(pe_data)
     df_index = pd.DataFrame(index_data)
@@ -96,7 +85,6 @@ def run_validation(ce_data, pe_data, index_data):
         df['entry_time'] = df['dateTime'].apply(extract_entry_time)
         df['entry_signal'] = df['signal'].apply(extract_entry_signal)
         df['trade_type'] = df['type'].apply(extract_trade_type)
-
         df.dropna(subset=['entry_time'], inplace=True)
 
     df_ce = df_ce[df_ce['trade_type'].str.contains('Entry', na=False)]
@@ -106,10 +94,6 @@ def run_validation(ce_data, pe_data, index_data):
     df_ce = df_ce.sort_values('entry_time')
     df_pe = df_pe.sort_values('entry_time')
     df_index = df_index.sort_values('entry_time')
-
-    # =============================
-    # MATCH LOGIC
-    # =============================
 
     matched = []
     ce_unmatched = []
@@ -151,14 +135,21 @@ def run_validation(ce_data, pe_data, index_data):
             pe_used.add(pe.name)
 
             matched.append({
+
+                # ================= CE =================
+                "CE Symbol": ce.get('symbol'),
                 "CE TradeNo": ce.get('tradeNo'),
                 "CE Signal": ce_signal,
                 "CE Time": ce_time.strftime("%d-%m-%Y %H:%M:%S"),
 
+                # ================= PE =================
+                "PE Symbol": pe.get('symbol'),
                 "PE TradeNo": pe.get('tradeNo'),
                 "PE Signal": required_pe_signal,
                 "PE Time": pe['entry_time'].strftime("%d-%m-%Y %H:%M:%S"),
 
+                # ================= INDEX =================
+                "INDEX Symbol": index_row.get('symbol'),
                 "INDEX TradeNo": index_row.get('tradeNo'),
                 "INDEX Signal": required_index_signal,
                 "INDEX Time": index_row['entry_time'].strftime("%d-%m-%Y %H:%M:%S"),
@@ -169,6 +160,7 @@ def run_validation(ce_data, pe_data, index_data):
 
         else:
             ce_unmatched.append({
+                "CE Symbol": ce.get('symbol'),
                 "CE TradeNo": ce.get('tradeNo'),
                 "Signal": ce_signal,
                 "Time": ce_time.strftime("%d-%m-%Y %H:%M:%S"),
@@ -183,8 +175,10 @@ def run_validation(ce_data, pe_data, index_data):
     pe_unmatched['Time'] = pe_unmatched['entry_time'].dt.strftime("%d-%m-%Y %H:%M:%S")
     pe_unmatched['Reason'] = "No CE confirmation"
 
-    pe_unmatched = pe_unmatched[['tradeNo','entry_signal','trade_type','Time','Reason']]
-    pe_unmatched.columns = ['PE TradeNo','Signal','Trade Type','Time','Reason']
+    pe_unmatched['PE Symbol'] = pe_unmatched['symbol']
+
+    pe_unmatched = pe_unmatched[['PE Symbol','tradeNo','entry_signal','trade_type','Time','Reason']]
+    pe_unmatched.columns = ['PE Symbol','PE TradeNo','Signal','Trade Type','Time','Reason']
 
     # =============================
     # EXPORT FILES
