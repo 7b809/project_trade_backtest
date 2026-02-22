@@ -121,16 +121,28 @@ def validate():
             token=GITHUB_TOKEN
         )
 
-        raw_urls = [
-            f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{path}"
-            for path in uploaded_files
-        ]
+        # ==========================
+        # BUILD RAW URLS
+        # ==========================
 
-        folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/validation_results/validation_{timestamp}"
+        raw_base = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/"
+        raw_urls = [raw_base + path for path in uploaded_files]
+
+        # Find matched signals file
+        matched_signals_url = next(
+            (raw_base + p for p in uploaded_files if "matched_signals.xlsx" in p),
+            None
+        )
+
+        folder_path = f"validation_results/validation_{timestamp}"
+        folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
 
         response_data = {
             "status": "success",
+            "repo": GITHUB_REPO,
+            "folder_path": folder_path,
             "folder_url": folder_url,
+            "matched_signals_url": matched_signals_url,
             "files": raw_urls
         }
 
@@ -142,8 +154,11 @@ def validate():
     finally:
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
-
-
+            
+            
+# ==========================================
+# VALIDATE FROM GITHUB JSON FILES
+# ==========================================
 # ==========================================
 # VALIDATE FROM GITHUB JSON FILES
 # ==========================================
@@ -175,7 +190,7 @@ def validate_from_github():
         index_data = fetch_github_json(index_url, "INDEX")
 
         # ==========================
-        # RUN VALIDATION USING RAW JSON DATA
+        # RUN VALIDATION
         # ==========================
 
         output_folder = run_validation(ce_data, pe_data, index_data)
@@ -190,17 +205,28 @@ def validate_from_github():
             token=GITHUB_TOKEN
         )
 
-        folder_path = f"validation_results/validation_{timestamp}"
+        # ==========================
+        # BUILD RAW URLS
+        # ==========================
 
-        folder_url = (
-            f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
+        raw_base = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/"
+        raw_urls = [raw_base + path for path in uploaded_files]
+
+        matched_signals_url = next(
+            (raw_base + p for p in uploaded_files if "matched_signals.xlsx" in p),
+            None
         )
+
+        folder_path = f"validation_results/validation_{timestamp}"
+        folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
 
         response_data = {
             "status": "success",
             "repo": GITHUB_REPO,
             "folder_path": folder_path,
-            "folder_url": folder_url
+            "folder_url": folder_url,
+            "matched_signals_url": matched_signals_url,
+            "files": raw_urls
         }
 
         return jsonify(response_data)
@@ -211,8 +237,8 @@ def validate_from_github():
     finally:
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
-
-
+            
+            
 # ==========================================
 # RUN LOCAL SERVER
 # ==========================================
