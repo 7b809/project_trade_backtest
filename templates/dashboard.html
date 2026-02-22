@@ -133,7 +133,6 @@ function copyToClipboard(text) {
 
 async function deleteValidation(folder) {
 
-    if (!confirm(`Delete ${folder}?`)) return;
 
     const response = await fetch(`/delete/${folder}`, {
         method: "DELETE"
@@ -153,8 +152,6 @@ async function deleteValidation(folder) {
 
 async function deleteAllValidations() {
 
-    if (!confirm("Are you sure you want to delete ALL validations?"))
-        return;
 
     const response = await fetch("/delete-all", {
         method: "GET"
