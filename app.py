@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
-import os,requests,shutil
+import os, requests, shutil
 from validator import run_validation
 from github_uploader import upload_folder_to_github
 from dotenv import load_dotenv
-
 from github_uploader import delete_folder_recursive
+from utils.fetch_json import fetch_github_json
+
 # ==========================================
 # LOAD ENV VARIABLES
 # ==========================================
@@ -26,6 +27,11 @@ app = Flask(__name__)
 def home():
     return "Trade Validation API Running"
 
+
+# ==========================================
+# DELETE ONE FOLDER
+# ==========================================
+
 @app.route("/delete/<folder_name>", methods=["DELETE"])
 def delete_one(folder_name):
 
@@ -45,7 +51,12 @@ def delete_one(folder_name):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+
+# ==========================================
+# DELETE ALL FOLDERS
+# ==========================================
+
 @app.route("/delete-all", methods=["DELETE"])
 def delete_all():
 
@@ -64,7 +75,9 @@ def delete_all():
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500    
+        return jsonify({"error": str(e)}), 500
+
+
 # ==========================================
 # VALIDATE ROUTE
 # ==========================================
@@ -72,7 +85,7 @@ def delete_all():
 @app.route("/validate", methods=["POST"])
 def validate():
 
-    output_folder = None  # define outside try
+    output_folder = None
 
     try:
         data = request.get_json()
@@ -122,10 +135,6 @@ def validate():
         return jsonify({"error": str(e)}), 500
 
     finally:
-        # ==========================
-        # CLEANUP LOCAL FILES
-        # ==========================
-
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
 
@@ -153,15 +162,15 @@ def validate_from_github():
             return jsonify({"error": "Missing GitHub raw URLs"}), 400
 
         # ==========================
-        # FETCH JSON FROM GITHUB
+        # FETCH RAW JSON SAFELY
         # ==========================
 
-        ce_data = requests.get(ce_url).json()
-        pe_data = requests.get(pe_url).json()
-        index_data = requests.get(index_url).json()
+        ce_data = fetch_github_json(ce_url, "CE")
+        pe_data = fetch_github_json(pe_url, "PE")
+        index_data = fetch_github_json(index_url, "INDEX")
 
         # ==========================
-        # RUN VALIDATION
+        # RUN VALIDATION USING RAW JSON DATA
         # ==========================
 
         output_folder = run_validation(ce_data, pe_data, index_data)
@@ -176,18 +185,20 @@ def validate_from_github():
             token=GITHUB_TOKEN
         )
 
-        raw_urls = [
-            f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{path}"
-            for path in uploaded_files
-        ]
+        folder_path = f"validation_results/validation_{timestamp}"
 
-        folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/validation_results/validation_{timestamp}"
+        folder_url = (
+            f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
+        )
 
-        return jsonify({
+        response_data = {
             "status": "success",
-            "folder_url": folder_url,
-            "files": raw_urls
-        })
+            "repo": GITHUB_REPO,
+            "folder_path": folder_path,
+            "folder_url": folder_url
+        }
+
+        return jsonify(response_data)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -195,6 +206,8 @@ def validate_from_github():
     finally:
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
+
+
 # ==========================================
 # RUN LOCAL SERVER
 # ==========================================

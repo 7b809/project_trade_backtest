@@ -41,6 +41,9 @@ def upload_folder_to_github(folder_path, repo, token):
             full_path = os.path.join(root, file)
             relative_path = os.path.relpath(full_path, folder_path)
 
+            # ✅ FIX: Convert Windows backslashes to forward slashes
+            relative_path = relative_path.replace("\\", "/")
+
             repo_path = f"validation_results/validation_{timestamp}/{relative_path}"
 
             upload_file(repo, token, full_path, repo_path)
