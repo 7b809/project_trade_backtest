@@ -4,167 +4,134 @@
     <title>Trade Validator</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-light">
 
-<!-- ================= NAVBAR ================= -->
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">Trade Validator</a>
-
-        <div class="d-flex">
-            <a href="/dashboard" class="btn btn-outline-light btn-sm">
-                Dashboard
-            </a>
-        </div>
+        <a href="/dashboard" class="btn btn-outline-light btn-sm">Dashboard</a>
     </div>
 </nav>
 
-
-<!-- ================= MAIN CONTAINER ================= -->
-
 <div class="container mt-5">
 
-    <div class="card shadow-lg">
-        <div class="card-header bg-dark text-white text-center">
-            <h3>Trade Validation System</h3>
-        </div>
+<div class="card shadow-lg">
+<div class="card-header bg-dark text-white text-center">
+    <h3>Trade Validation System</h3>
+</div>
 
-        <div class="card-body">
+<div class="card-body">
 
-            <!-- MODE TOGGLE -->
-            <div class="form-check form-switch mb-4 text-center">
-                <input class="form-check-input" type="checkbox" id="modeToggle" checked>
-                <label class="form-check-label">
-                    Use GitHub JSON URLs Instead of File Upload
-                </label>
-            </div>
+<!-- MODE TOGGLE -->
+<div class="form-check form-switch mb-4 text-center">
+    <input class="form-check-input" type="checkbox" id="modeToggle" checked>
+    <label class="form-check-label">
+        Use Remote Folder Mode
+    </label>
+</div>
 
-            <form id="validationForm">
+<form id="validationForm">
 
-                <!-- FILE SECTION -->
-                <div id="fileSection" class="d-none">
+<!-- FILE SECTION -->
+<div id="fileSection" class="d-none">
+    <div class="mb-3">
+        <label>CE JSON File</label>
+        <input type="file" class="form-control" id="ceFile">
+    </div>
+    <div class="mb-3">
+        <label>PE JSON File</label>
+        <input type="file" class="form-control" id="peFile">
+    </div>
+    <div class="mb-3">
+        <label>Index JSON File</label>
+        <input type="file" class="form-control" id="indexFile">
+    </div>
+</div>
 
-                    <div class="mb-3">
-                        <label class="form-label">CE JSON File</label>
-                        <input type="file" class="form-control" id="ceFile">
-                    </div>
+<!-- FOLDER MODE SECTION -->
+<div id="folderSection">
 
-                    <div class="mb-3">
-                        <label class="form-label">PE JSON File</label>
-                        <input type="file" class="form-control" id="peFile">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Index JSON File</label>
-                        <input type="file" class="form-control" id="indexFile">
-                    </div>
-
-                </div>
-
-                <!-- URL SECTION -->
-                <div id="urlSection">
-
-                    <div class="mb-3">
-                        <label class="form-label">CE JSON URL</label>
-                        <input type="text" class="form-control" id="ceUrl">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">PE JSON URL</label>
-                        <input type="text" class="form-control" id="peUrl">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Index JSON URL</label>
-                        <input type="text" class="form-control" id="indexUrl">
-                    </div>
-
-                </div>
-
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        Validate & Upload
-                    </button>
-                </div>
-
-            </form>
-
-            <!-- LOADING -->
-            <div class="text-center mt-4">
-                <div class="spinner-border text-primary d-none" id="loadingSpinner"></div>
-            </div>
-
-            <!-- ================= RESULTS ================= -->
-
-            <div id="resultSection" class="mt-4 d-none">
-
-                <div class="alert alert-success text-center">
-                    <h5>Validation Completed Successfully</h5>
-                </div>
-
-                <!-- Folder -->
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6>📁 Validation Folder</h6>
-                        <a id="folderUrl" target="_blank"></a>
-                    </div>
-                </div>
-
-                <!-- Matched Signals -->
-                <div class="card mb-3" id="matchedCard" style="display:none;">
-                    <div class="card-body text-center">
-                        <h6>📊 Matched Signals (Excel)</h6>
-                        <a id="matchedUrl" target="_blank" class="btn btn-success">
-                            Download Matched Signals
-                        </a>
-                    </div>
-                </div>
-
-                <!-- All Files -->
-                <div class="card">
-                    <div class="card-body">
-                        <h6>📄 All Generated Files</h6>
-                        <table class="table table-bordered mt-3">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>#</th>
-                                    <th>File Name</th>
-                                    <th>Open</th>
-                                </tr>
-                            </thead>
-                            <tbody id="filesTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
+    <div class="mb-3">
+        <label class="form-label">Folder Number</label>
+        <input type="number" class="form-control" id="folderNumber"
+               placeholder="Enter folder number like 1,2,3">
+        <small class="text-muted">
+            Reads from: uploads/folder_X/
+        </small>
     </div>
 
 </div>
 
+<div class="d-grid">
+    <button type="submit" class="btn btn-primary">
+        Validate & Upload
+    </button>
+</div>
 
-<!-- ================= SCRIPT ================= -->
+</form>
+
+<div class="text-center mt-4">
+    <div class="spinner-border text-primary d-none" id="loadingSpinner"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultSection" class="mt-4 d-none">
+
+<div class="alert alert-success text-center">
+    <h5>Validation Completed Successfully</h5>
+</div>
+
+<div class="card mb-3">
+<div class="card-body">
+    <h6>📁 Validation Folder</h6>
+    <a id="folderUrl" target="_blank"></a>
+</div>
+</div>
+
+<div class="card mb-3" id="matchedCard" style="display:none;">
+<div class="card-body text-center">
+    <h6>📊 Matched Signals (Excel)</h6>
+    <a id="matchedUrl" target="_blank" class="btn btn-success">
+        Download Matched Signals
+    </a>
+</div>
+</div>
+
+<div class="card">
+<div class="card-body">
+    <h6>📄 All Generated Files</h6>
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>File</th>
+                <th>Open</th>
+            </tr>
+        </thead>
+        <tbody id="filesTableBody"></tbody>
+    </table>
+</div>
+</div>
+
+</div>
+</div>
+</div>
 
 <script>
 
 const toggle = document.getElementById("modeToggle");
 const fileSection = document.getElementById("fileSection");
-const urlSection = document.getElementById("urlSection");
+const folderSection = document.getElementById("folderSection");
 
 toggle.addEventListener("change", function() {
     if (toggle.checked) {
         fileSection.classList.add("d-none");
-        urlSection.classList.remove("d-none");
+        folderSection.classList.remove("d-none");
     } else {
-        urlSection.classList.add("d-none");
+        folderSection.classList.add("d-none");
         fileSection.classList.remove("d-none");
     }
 });
@@ -184,6 +151,7 @@ document.getElementById("validationForm").addEventListener("submit", async funct
 
     let response;
 
+    // ================= FILE MODE =================
     if (!toggle.checked) {
 
         const ceFile = document.getElementById("ceFile").files[0];
@@ -191,7 +159,7 @@ document.getElementById("validationForm").addEventListener("submit", async funct
         const indexFile = document.getElementById("indexFile").files[0];
 
         if (!ceFile || !peFile || !indexFile) {
-            alert("Please upload all JSON files.");
+            alert("Upload all JSON files.");
             spinner.classList.add("d-none");
             return;
         }
@@ -210,25 +178,28 @@ document.getElementById("validationForm").addEventListener("submit", async funct
             })
         });
 
-    } else {
+    }
+    // ================= FOLDER MODE =================
+    else {
 
-        const ceUrl = document.getElementById("ceUrl").value;
-        const peUrl = document.getElementById("peUrl").value;
-        const indexUrl = document.getElementById("indexUrl").value;
+        const folderNum = document.getElementById("folderNumber").value;
 
-        if (!ceUrl || !peUrl || !indexUrl) {
-            alert("Please provide all JSON URLs.");
+        if (!folderNum) {
+            alert("Enter folder number.");
             spinner.classList.add("d-none");
             return;
         }
+
+        const baseRepo = "acc0012/save-remote-files";
+        const basePath = `https://raw.githubusercontent.com/${baseRepo}/main/uploads/folder_${folderNum}`;
 
         response = await fetch("/validate-from-github", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
-                ce_url: ceUrl,
-                pe_url: peUrl,
-                index_url: indexUrl
+                ce_url: `${basePath}/ce_all_trades.json`,
+                pe_url: `${basePath}/pe_all_trades.json`,
+                index_url: `${basePath}/index_all_trades.json`
             })
         });
     }
