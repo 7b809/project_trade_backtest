@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trade Validator</title>
+    <meta charset="UTF-8">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white text-center">
+            <h3>Trade Validation System</h3>
+        </div>
+
+        <div class="card-body">
+
+            <!-- MODE TOGGLE -->
+            <div class="form-check form-switch mb-4 text-center">
+                <input class="form-check-input" type="checkbox" id="modeToggle">
+                <label class="form-check-label">
+                    Use GitHub JSON URLs Instead of File Upload
+                </label>
+            </div>
+
+            <form id="validationForm">
+
+                <!-- FILE UPLOAD SECTION -->
+                <div id="fileSection">
+
+                    <div class="mb-3">
+                        <label class="form-label">CE JSON File</label>
+                        <input type="file" class="form-control" id="ceFile">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">PE JSON File</label>
+                        <input type="file" class="form-control" id="peFile">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Index JSON File</label>
+                        <input type="file" class="form-control" id="indexFile">
+                    </div>
+
+                </div>
+
+                <!-- URL SECTION -->
+                <div id="urlSection" class="d-none">
+
+                    <div class="mb-3">
+                        <label class="form-label">CE JSON URL</label>
+                        <input type="text" class="form-control" id="ceUrl">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">PE JSON URL</label>
+                        <input type="text" class="form-control" id="peUrl">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Index JSON URL</label>
+                        <input type="text" class="form-control" id="indexUrl">
+                    </div>
+
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        Validate & Upload
+                    </button>
+                </div>
+
+            </form>
+
+            <div class="text-center mt-4">
+                <div class="spinner-border text-primary d-none" id="loadingSpinner"></div>
+            </div>
+
+            <div id="resultSection" class="mt-4 d-none">
+                <div class="alert alert-success">
+                    <h5>Validation Completed</h5>
+                    <p><strong>Folder:</strong> 
+                        <a id="folderUrl" target="_blank"></a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+const toggle = document.getElementById("modeToggle");
+const fileSection = document.getElementById("fileSection");
+const urlSection = document.getElementById("urlSection");
+
+toggle.addEventListener("change", function() {
+    if (toggle.checked) {
+        fileSection.classList.add("d-none");
+        urlSection.classList.remove("d-none");
+    } else {
+        urlSection.classList.add("d-none");
+        fileSection.classList.remove("d-none");
+    }
+});
+
+
+document.getElementById("validationForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const spinner = document.getElementById("loadingSpinner");
+    const resultSection = document.getElementById("resultSection");
+
+    spinner.classList.remove("d-none");
+    resultSection.classList.add("d-none");
+
+    let response;
+
+    // ==============================
+    // FILE MODE
+    // ==============================
+    if (!toggle.checked) {
+
+        const ceFile = document.getElementById("ceFile").files[0];
+        const peFile = document.getElementById("peFile").files[0];
+        const indexFile = document.getElementById("indexFile").files[0];
+
+        if (!ceFile || !peFile || !indexFile) {
+            alert("Please upload all JSON files.");
+            spinner.classList.add("d-none");
+            return;
+        }
+
+        const ceData = await ceFile.text();
+        const peData = await peFile.text();
+        const indexData = await indexFile.text();
+
+        response = await fetch("/validate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                ce_data: JSON.parse(ceData),
+                pe_data: JSON.parse(peData),
+                index_data: JSON.parse(indexData)
+            })
+        });
+
+    } 
+    // ==============================
+    // URL MODE
+    // ==============================
+    else {
+
+        const ceUrl = document.getElementById("ceUrl").value;
+        const peUrl = document.getElementById("peUrl").value;
+        const indexUrl = document.getElementById("indexUrl").value;
+
+        if (!ceUrl || !peUrl || !indexUrl) {
+            alert("Please provide all JSON URLs.");
+            spinner.classList.add("d-none");
+            return;
+        }
+
+        response = await fetch("/validate-from-github", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                ce_url: ceUrl,
+                pe_url: peUrl,
+                index_url: indexUrl
+            })
+        });
+    }
+
+    const result = await response.json();
+    spinner.classList.add("d-none");
+
+    if (result.status === "success") {
+
+        document.getElementById("folderUrl").href = result.folder_url;
+        document.getElementById("folderUrl").innerText = result.folder_url;
+
+        resultSection.classList.remove("d-none");
+
+    } else {
+        alert("Error: " + result.error);
+    }
+});
+
+</script>
+
+</body>
+</html>

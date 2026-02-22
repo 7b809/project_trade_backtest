@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from github_uploader import delete_folder_recursive
 from utils.fetch_json import fetch_github_json
 
+from flask import render_template
 # ==========================================
 # LOAD ENV VARIABLES
 # ==========================================
@@ -23,10 +24,14 @@ app = Flask(__name__)
 # HOME ROUTE
 # ==========================================
 
-@app.route("/")
+@app.route("/health")
 def home():
     return "Trade Validation API Running"
 
+
+@app.route("/")
+def ui():
+    return render_template("index.html")
 
 # ==========================================
 # DELETE ONE FOLDER
