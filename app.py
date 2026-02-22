@@ -116,8 +116,9 @@ def validate():
         # RUN VALIDATION
         # ==========================
 
-        output_folder = run_validation(ce_data, pe_data, index_data)
-
+        validation_result = run_validation(ce_data, pe_data, index_data)
+        output_folder = validation_result["base_directory"]
+                
         # ==========================
         # UPLOAD TO GITHUB
         # ==========================
@@ -211,7 +212,8 @@ def validate_from_github():
         # RUN VALIDATION
         # ==========================
 
-        output_folder = run_validation(ce_data, pe_data, index_data)
+        validation_result = run_validation(ce_data, pe_data, index_data)
+        output_folder = validation_result["base_directory"]
 
         # ==========================
         # UPLOAD RESULTS TO GITHUB
