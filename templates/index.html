@@ -3,7 +3,6 @@
 <head>
     <title>Trade Validator</title>
     <meta charset="UTF-8">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -18,7 +17,7 @@
 
             <!-- MODE TOGGLE -->
             <div class="form-check form-switch mb-4 text-center">
-                <input class="form-check-input" type="checkbox" id="modeToggle">
+                <input class="form-check-input" type="checkbox" id="modeToggle" checked>
                 <label class="form-check-label">
                     Use GitHub JSON URLs Instead of File Upload
                 </label>
@@ -26,8 +25,8 @@
 
             <form id="validationForm">
 
-                <!-- FILE UPLOAD SECTION -->
-                <div id="fileSection">
+                <!-- FILE SECTION -->
+                <div id="fileSection" class="d-none">
 
                     <div class="mb-3">
                         <label class="form-label">CE JSON File</label>
@@ -47,7 +46,7 @@
                 </div>
 
                 <!-- URL SECTION -->
-                <div id="urlSection" class="d-none">
+                <div id="urlSection">
 
                     <div class="mb-3">
                         <label class="form-label">CE JSON URL</label>
@@ -78,13 +77,45 @@
                 <div class="spinner-border text-primary d-none" id="loadingSpinner"></div>
             </div>
 
+            <!-- RESULTS -->
             <div id="resultSection" class="mt-4 d-none">
+
                 <div class="alert alert-success">
-                    <h5>Validation Completed</h5>
-                    <p><strong>Folder:</strong> 
-                        <a id="folderUrl" target="_blank"></a>
-                    </p>
+                    <h5>Validation Completed Successfully</h5>
                 </div>
+
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6>📁 Validation Folder</h6>
+                        <a id="folderUrl" target="_blank"></a>
+                    </div>
+                </div>
+
+                <div class="card mb-3" id="matchedCard" style="display:none;">
+                    <div class="card-body text-center">
+                        <h6>📊 Matched Signals (Excel)</h6>
+                        <a id="matchedUrl" target="_blank" class="btn btn-success">
+                            Download Matched Signals
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h6>📄 All Generated Files</h6>
+                        <table class="table table-bordered mt-3">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>File</th>
+                                    <th>Open</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
 
         </div>
@@ -107,21 +138,21 @@ toggle.addEventListener("change", function() {
     }
 });
 
-
 document.getElementById("validationForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
     const spinner = document.getElementById("loadingSpinner");
     const resultSection = document.getElementById("resultSection");
+    const filesTableBody = document.getElementById("filesTableBody");
+    const matchedCard = document.getElementById("matchedCard");
 
     spinner.classList.remove("d-none");
     resultSection.classList.add("d-none");
+    filesTableBody.innerHTML = "";
+    matchedCard.style.display = "none";
 
     let response;
 
-    // ==============================
-    // FILE MODE
-    // ==============================
     if (!toggle.checked) {
 
         const ceFile = document.getElementById("ceFile").files[0];
@@ -148,11 +179,7 @@ document.getElementById("validationForm").addEventListener("submit", async funct
             })
         });
 
-    } 
-    // ==============================
-    // URL MODE
-    // ==============================
-    else {
+    } else {
 
         const ceUrl = document.getElementById("ceUrl").value;
         const peUrl = document.getElementById("peUrl").value;
@@ -182,6 +209,32 @@ document.getElementById("validationForm").addEventListener("submit", async funct
 
         document.getElementById("folderUrl").href = result.folder_url;
         document.getElementById("folderUrl").innerText = result.folder_url;
+
+        // Show matched signals prominently
+        if (result.matched_signals_url) {
+            matchedCard.style.display = "block";
+            document.getElementById("matchedUrl").href = result.matched_signals_url;
+        }
+
+        // Populate files table
+        result.files.forEach((fileUrl, index) => {
+
+            const fileName = fileUrl.split("/").pop();
+
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${fileName}</td>
+                    <td>
+                        <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            Open
+                        </a>
+                    </td>
+                </tr>
+            `;
+
+            filesTableBody.innerHTML += row;
+        });
 
         resultSection.classList.remove("d-none");
 
