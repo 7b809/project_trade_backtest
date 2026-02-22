@@ -56,8 +56,20 @@
 
     <div class="mb-3">
         <label class="form-label">Folder Number</label>
-        <input type="number" class="form-control" id="folderNumber"
-               placeholder="Enter folder number like 1,2,3">
+
+        <div class="input-group">
+            <button class="btn btn-outline-secondary" type="button" id="minusBtn">−</button>
+
+            <input type="number"
+                   class="form-control text-center"
+                   id="folderNumber"
+                   value="1"
+                   min="1"
+                   placeholder="Enter folder number like 1,2,3">
+
+            <button class="btn btn-outline-secondary" type="button" id="plusBtn">+</button>
+        </div>
+
         <small class="text-muted">
             Reads from: uploads/folder_X/
         </small>
@@ -133,6 +145,24 @@ toggle.addEventListener("change", function() {
     } else {
         folderSection.classList.add("d-none");
         fileSection.classList.remove("d-none");
+    }
+});
+
+/* ================================
+   PLUS / MINUS FUNCTIONALITY
+   ================================ */
+
+const folderInput = document.getElementById("folderNumber");
+const plusBtn = document.getElementById("plusBtn");
+const minusBtn = document.getElementById("minusBtn");
+
+plusBtn.addEventListener("click", function() {
+    folderInput.stepUp();
+});
+
+minusBtn.addEventListener("click", function() {
+    if (folderInput.value > 1) {
+        folderInput.stepDown();
     }
 });
 
