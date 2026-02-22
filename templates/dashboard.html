@@ -3,6 +3,7 @@
 <head>
     <title>Validation Dashboard</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -32,6 +33,7 @@
                         <th>#</th>
                         <th>Folder Name</th>
                         <th>Open</th>
+                        <th>Copy Matched Excel</th>
                         <th>Delete</th>
                     </tr>
                 </thead>
@@ -45,6 +47,8 @@
 
 <script>
 
+let currentRepo = "";
+
 // ================= LOAD VALIDATIONS =================
 
 async function loadValidations() {
@@ -57,10 +61,15 @@ async function loadValidations() {
 
     if (result.status === "success") {
 
+        currentRepo = result.repo;
+
         result.folders.forEach((folder, index) => {
 
             const folderUrl =
                 `https://github.com/${result.repo}/tree/main/validation_results/${folder}`;
+
+            const matchedExcelUrl =
+                `https://raw.githubusercontent.com/${result.repo}/main/validation_results/${folder}/valid/matched_signals.xlsx`;
 
             const row = `
                 <tr>
@@ -71,6 +80,12 @@ async function loadValidations() {
                            class="btn btn-sm btn-outline-primary">
                            Open
                         </a>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-success"
+                            onclick="copyToClipboard('${matchedExcelUrl}')">
+                            Copy URL
+                        </button>
                     </td>
                     <td>
                         <button class="btn btn-sm btn-outline-danger"
@@ -90,6 +105,18 @@ async function loadValidations() {
 }
 
 
+// ================= COPY FUNCTION =================
+
+function copyToClipboard(text) {
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Matched Excel URL copied!");
+    }).catch(err => {
+        alert("Failed to copy.");
+    });
+}
+
+
 // ================= DELETE ONE =================
 
 async function deleteValidation(folder) {
@@ -103,7 +130,6 @@ async function deleteValidation(folder) {
     const result = await response.json();
 
     if (result.status === "success") {
-        alert("Deleted Successfully");
         loadValidations();
     } else {
         alert("Error: " + result.error);
@@ -125,7 +151,6 @@ async function deleteAllValidations() {
     const result = await response.json();
 
     if (result.status === "success") {
-        alert("All validations deleted");
         loadValidations();
     } else {
         alert("Error: " + result.error);
