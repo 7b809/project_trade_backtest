@@ -57,7 +57,7 @@ def delete_one(folder_name):
 # DELETE ALL FOLDERS
 # ==========================================
 
-@app.route("/delete-all", methods=["DELETE"])
+@app.route("/delete-all", methods=["get"])
 def delete_all():
 
     try:
