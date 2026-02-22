@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 from datetime import datetime
 from openpyxl import load_workbook
@@ -136,19 +137,16 @@ def run_validation(ce_data, pe_data, index_data):
 
             matched.append({
 
-                # ================= CE =================
                 "CE Symbol": ce.get('symbol'),
                 "CE TradeNo": ce.get('tradeNo'),
                 "CE Signal": ce_signal,
                 "CE Time": ce_time.strftime("%d-%m-%Y %H:%M:%S"),
 
-                # ================= PE =================
                 "PE Symbol": pe.get('symbol'),
                 "PE TradeNo": pe.get('tradeNo'),
                 "PE Signal": required_pe_signal,
                 "PE Time": pe['entry_time'].strftime("%d-%m-%Y %H:%M:%S"),
 
-                # ================= INDEX =================
                 "INDEX Symbol": index_row.get('symbol'),
                 "INDEX TradeNo": index_row.get('tradeNo'),
                 "INDEX Signal": required_index_signal,
@@ -191,37 +189,42 @@ def run_validation(ce_data, pe_data, index_data):
     save_excel(pe_unmatched, os.path.join(not_valid_dir, "pe_unmatched.xlsx"))
 
     # =============================
-    # TEXT SUMMARY
+    # EXPORT MATCHED JSON
     # =============================
 
+    matched_json_path = os.path.join(valid_dir, "matched_signals.json")
+
     if not matched_df.empty:
+        matched_df.to_json(matched_json_path, orient="records", indent=4)
+    else:
+        with open(matched_json_path, "w") as f:
+            f.write("[]")
 
-        bullish_count = len(matched_df[matched_df['Confirmation Type'] == "CE Bullish Confirmed"])
-        bearish_count = len(matched_df[matched_df['Confirmation Type'] == "CE Bearish Confirmed"])
-        total_valid = len(matched_df)
+    # =============================
+    # META JSON FILE
+    # =============================
 
-        bullish_pct = round((bullish_count / total_valid) * 100, 2)
-        bearish_pct = round((bearish_count / total_valid) * 100, 2)
+    meta_json_path = os.path.join(base_dir, "validation_meta.json")
 
-        summary_text = f"""
-VALIDATION SUMMARY
-=====================================
+    meta_data = {
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "ce_symbols": sorted(df_ce['symbol'].dropna().unique().tolist()) if not df_ce.empty else [],
+        "pe_symbols": sorted(df_pe['symbol'].dropna().unique().tolist()) if not df_pe.empty else [],
+        "index_symbols": sorted(df_index['symbol'].dropna().unique().tolist()) if not df_index.empty else [],
+        "ce_min_time": df_ce['entry_time'].min().strftime("%d-%m-%Y %H:%M:%S") if not df_ce.empty else None,
+        "ce_max_time": df_ce['entry_time'].max().strftime("%d-%m-%Y %H:%M:%S") if not df_ce.empty else None,
+        "pe_min_time": df_pe['entry_time'].min().strftime("%d-%m-%Y %H:%M:%S") if not df_pe.empty else None,
+        "pe_max_time": df_pe['entry_time'].max().strftime("%d-%m-%Y %H:%M:%S") if not df_pe.empty else None,
+        "index_min_time": df_index['entry_time'].min().strftime("%d-%m-%Y %H:%M:%S") if not df_index.empty else None,
+        "index_max_time": df_index['entry_time'].max().strftime("%d-%m-%Y %H:%M:%S") if not df_index.empty else None,
+        "total_ce_entries": len(df_ce),
+        "total_pe_entries": len(df_pe),
+        "total_index_entries": len(df_index),
+        "total_valid_matches": len(matched_df)
+    }
 
-Total Confirmed Trades : {total_valid}
-
--------------------------------------
-CE Bullish Confirmed Trades : {bullish_count}
-CE Bearish Confirmed Trades : {bearish_count}
--------------------------------------
-
-Bullish Percentage : {bullish_pct} %
-Bearish Percentage : {bearish_pct} %
-
-Generated Automatically
-"""
-
-        with open(os.path.join(valid_dir, "trade_summary.txt"), "w") as f:
-            f.write(summary_text)
+    with open(meta_json_path, "w") as f:
+        json.dump(meta_data, f, indent=4)
 
     # =============================
     # GLOBAL SUMMARY
@@ -250,4 +253,12 @@ Generated Automatically
 
     save_excel(summary, os.path.join(base_dir, "summary.xlsx"))
 
-    return base_dir
+    # =============================
+    # RETURN PATHS
+    # =============================
+
+    return {
+        "base_directory": base_dir,
+        "matched_json_file": matched_json_path,
+        "meta_json_file": meta_json_path
+    }

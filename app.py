@@ -141,6 +141,17 @@ def validate():
             None
         )
 
+        matched_json_url = next(
+            (raw_base + p for p in uploaded_files if "matched_signals.json" in p),
+            None
+        )
+
+        meta_json_url = next(
+            (raw_base + p for p in uploaded_files if "validation_meta.json" in p),
+            None
+        )
+        
+        
         folder_path = f"validation_results/validation_{timestamp}"
         folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
 
@@ -150,6 +161,8 @@ def validate():
             "folder_path": folder_path,
             "folder_url": folder_url,
             "matched_signals_url": matched_signals_url,
+            "matched_json_url": matched_json_url,
+            "meta_json_url": meta_json_url,
             "files": raw_urls
         }
 
@@ -163,9 +176,7 @@ def validate():
             shutil.rmtree(output_folder)
             
             
-# ==========================================
-# VALIDATE FROM GITHUB JSON FILES
-# ==========================================
+
 # ==========================================
 # VALIDATE FROM GITHUB JSON FILES
 # ==========================================
@@ -218,11 +229,22 @@ def validate_from_github():
 
         raw_base = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/"
         raw_urls = [raw_base + path for path in uploaded_files]
-
+        # Find matched signals file
         matched_signals_url = next(
             (raw_base + p for p in uploaded_files if "matched_signals.xlsx" in p),
             None
         )
+
+        matched_json_url = next(
+            (raw_base + p for p in uploaded_files if "matched_signals.json" in p),
+            None
+        )
+
+        meta_json_url = next(
+            (raw_base + p for p in uploaded_files if "validation_meta.json" in p),
+            None
+        )
+        
 
         folder_path = f"validation_results/validation_{timestamp}"
         folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/{folder_path}"
@@ -233,6 +255,8 @@ def validate_from_github():
             "folder_path": folder_path,
             "folder_url": folder_url,
             "matched_signals_url": matched_signals_url,
+            "matched_json_url": matched_json_url,
+            "meta_json_url": meta_json_url,
             "files": raw_urls
         }
 

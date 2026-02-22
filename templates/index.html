@@ -112,6 +112,24 @@
 </div>
 </div>
 
+<div class="card mb-3" id="matchedJsonCard" style="display:none;">
+<div class="card-body text-center">
+    <h6>📄 Matched Signals (JSON)</h6>
+    <a id="matchedJsonUrl" target="_blank" class="btn btn-info">
+        Download JSON
+    </a>
+</div>
+</div>
+
+<div class="card mb-3" id="metaJsonCard" style="display:none;">
+<div class="card-body text-center">
+    <h6>📊 Validation Meta (JSON)</h6>
+    <a id="metaJsonUrl" target="_blank" class="btn btn-warning">
+        Download Meta JSON
+    </a>
+</div>
+</div>
+
 <div class="card">
 <div class="card-body">
     <h6>📄 All Generated Files</h6>
@@ -150,7 +168,7 @@ toggle.addEventListener("change", function() {
 
 /* ================================
    PLUS / MINUS FUNCTIONALITY
-   ================================ */
+================================ */
 
 const folderInput = document.getElementById("folderNumber");
 const plusBtn = document.getElementById("plusBtn");
@@ -173,11 +191,16 @@ document.getElementById("validationForm").addEventListener("submit", async funct
     const resultSection = document.getElementById("resultSection");
     const filesTableBody = document.getElementById("filesTableBody");
     const matchedCard = document.getElementById("matchedCard");
+    const matchedJsonCard = document.getElementById("matchedJsonCard");
+    const metaJsonCard = document.getElementById("metaJsonCard");
 
     spinner.classList.remove("d-none");
     resultSection.classList.add("d-none");
     filesTableBody.innerHTML = "";
+
     matchedCard.style.display = "none";
+    matchedJsonCard.style.display = "none";
+    metaJsonCard.style.display = "none";
 
     let response;
 
@@ -245,6 +268,16 @@ document.getElementById("validationForm").addEventListener("submit", async funct
         if (result.matched_signals_url) {
             matchedCard.style.display = "block";
             document.getElementById("matchedUrl").href = result.matched_signals_url;
+        }
+
+        if (result.matched_json_url) {
+            matchedJsonCard.style.display = "block";
+            document.getElementById("matchedJsonUrl").href = result.matched_json_url;
+        }
+
+        if (result.meta_json_url) {
+            metaJsonCard.style.display = "block";
+            document.getElementById("metaJsonUrl").href = result.meta_json_url;
         }
 
         result.files.forEach((fileUrl, index) => {
