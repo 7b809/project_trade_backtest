@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
-import os
+import os,requests,shutil
 from validator import run_validation
 from github_uploader import upload_folder_to_github
 from dotenv import load_dotenv
-import shutil
 
 from github_uploader import delete_folder_recursive
 # ==========================================
@@ -130,6 +129,72 @@ def validate():
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
 
+
+# ==========================================
+# VALIDATE FROM GITHUB JSON FILES
+# ==========================================
+
+@app.route("/validate-from-github", methods=["POST"])
+def validate_from_github():
+
+    output_folder = None
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "Invalid JSON body"}), 400
+
+        ce_url = data.get("ce_url")
+        pe_url = data.get("pe_url")
+        index_url = data.get("index_url")
+
+        if not ce_url or not pe_url or not index_url:
+            return jsonify({"error": "Missing GitHub raw URLs"}), 400
+
+        # ==========================
+        # FETCH JSON FROM GITHUB
+        # ==========================
+
+        ce_data = requests.get(ce_url).json()
+        pe_data = requests.get(pe_url).json()
+        index_data = requests.get(index_url).json()
+
+        # ==========================
+        # RUN VALIDATION
+        # ==========================
+
+        output_folder = run_validation(ce_data, pe_data, index_data)
+
+        # ==========================
+        # UPLOAD RESULTS TO GITHUB
+        # ==========================
+
+        uploaded_files, timestamp = upload_folder_to_github(
+            folder_path=output_folder,
+            repo=GITHUB_REPO,
+            token=GITHUB_TOKEN
+        )
+
+        raw_urls = [
+            f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{path}"
+            for path in uploaded_files
+        ]
+
+        folder_url = f"https://github.com/{GITHUB_REPO}/tree/main/validation_results/validation_{timestamp}"
+
+        return jsonify({
+            "status": "success",
+            "folder_url": folder_url,
+            "files": raw_urls
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        if output_folder and os.path.exists(output_folder):
+            shutil.rmtree(output_folder)
 # ==========================================
 # RUN LOCAL SERVER
 # ==========================================
