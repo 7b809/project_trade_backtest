@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Validation Dashboard</title>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <div class="card shadow-lg">
+        <div class="card-header bg-dark text-white text-center">
+            <h3>Validation Dashboard</h3>
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between mb-3">
+                <button class="btn btn-danger" onclick="deleteAllValidations()">
+                    Delete All Validations
+                </button>
+
+                <button class="btn btn-primary" onclick="loadValidations()">
+                    Refresh List
+                </button>
+            </div>
+
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Folder Name</th>
+                        <th>Open</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody id="validationTableBody"></tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+// ================= LOAD VALIDATIONS =================
+
+async function loadValidations() {
+
+    const tableBody = document.getElementById("validationTableBody");
+    tableBody.innerHTML = "";
+
+    const response = await fetch("/list-validations");
+    const result = await response.json();
+
+    if (result.status === "success") {
+
+        result.folders.forEach((folder, index) => {
+
+            const folderUrl =
+                `https://github.com/${result.repo}/tree/main/validation_results/${folder}`;
+
+            const row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${folder}</td>
+                    <td>
+                        <a href="${folderUrl}" target="_blank"
+                           class="btn btn-sm btn-outline-primary">
+                           Open
+                        </a>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger"
+                                onclick="deleteValidation('${folder}')">
+                                Delete
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            tableBody.innerHTML += row;
+        });
+
+    } else {
+        alert("Error loading folders");
+    }
+}
+
+
+// ================= DELETE ONE =================
+
+async function deleteValidation(folder) {
+
+    if (!confirm(`Delete ${folder}?`)) return;
+
+    const response = await fetch(`/delete/${folder}`, {
+        method: "DELETE"
+    });
+
+    const result = await response.json();
+
+    if (result.status === "success") {
+        alert("Deleted Successfully");
+        loadValidations();
+    } else {
+        alert("Error: " + result.error);
+    }
+}
+
+
+// ================= DELETE ALL =================
+
+async function deleteAllValidations() {
+
+    if (!confirm("Are you sure you want to delete ALL validations?"))
+        return;
+
+    const response = await fetch("/delete-all", {
+        method: "GET"
+    });
+
+    const result = await response.json();
+
+    if (result.status === "success") {
+        alert("All validations deleted");
+        loadValidations();
+    } else {
+        alert("Error: " + result.error);
+    }
+}
+
+
+// Auto load on page open
+window.onload = function() {
+    loadValidations();
+};
+
+</script>
+
+</body>
+</html>

@@ -3,7 +3,11 @@ import os, requests, shutil
 from validator import run_validation
 from github_uploader import upload_folder_to_github
 from dotenv import load_dotenv
-from github_uploader import delete_folder_recursive
+from github_uploader import (
+    upload_folder_to_github,
+    delete_folder_recursive,
+    get_folder_contents
+)
 from utils.fetch_json import fetch_github_json
 
 from flask import render_template
@@ -30,9 +34,12 @@ def home():
 
 
 @app.route("/")
-def ui():
+def home():
     return render_template("index.html")
 
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 # ==========================================
 # DELETE ONE FOLDER
 # ==========================================
@@ -238,7 +245,37 @@ def validate_from_github():
         if output_folder and os.path.exists(output_folder):
             shutil.rmtree(output_folder)
             
-            
+# ==========================================
+# LIST ALL VALIDATION FOLDERS
+# ==========================================
+
+@app.route("/list-validations", methods=["GET"])
+def list_validations():
+
+    try:
+        base_path = "validation_results"
+
+        contents = get_folder_contents(
+            repo=GITHUB_REPO,
+            token=GITHUB_TOKEN,
+            path=base_path
+        )
+
+        folders = [
+            item["name"]
+            for item in contents
+            if item["type"] == "dir"
+        ]
+
+        return jsonify({
+            "status": "success",
+            "repo": GITHUB_REPO,
+            "folders": folders
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+                
 # ==========================================
 # RUN LOCAL SERVER
 # ==========================================
